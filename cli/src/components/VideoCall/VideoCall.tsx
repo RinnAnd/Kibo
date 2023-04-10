@@ -10,10 +10,10 @@ const VideoCallBox = ({ localStreamRef, awayStreamRef, onClose }: VideoWindowPro
             <Logo />
         </Box>
       <Box width="90%" maxWidth="fit-content" border="2px" borderColor="input" borderRadius={20} overflow="hidden">
-        <video ref={awayStreamRef}></video>
+        <video ref={awayStreamRef} />
       </Box>
       <Box width="60%" border="2px" maxWidth="fit-content" borderColor="primaryComp" borderRadius={20} overflow="hidden" objectFit="cover">
-        <video ref={localStreamRef}></video>
+        <video ref={localStreamRef} muted={true} />
       </Box>
       <Box position="relative" right="-10rem" bottom="1rem">
         <Tooltip label="End call" fontSize="sm">
