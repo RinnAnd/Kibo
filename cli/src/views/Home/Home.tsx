@@ -1,0 +1,129 @@
+import { useState } from "react";
+import socket from "../../socket";
+import {
+  Box,
+  Button,
+  Heading,
+  Highlight,
+  Text,
+  Stack,
+  FormControl,
+  FormLabel,
+  Input,
+  FormErrorMessage,
+} from "@chakra-ui/react";
+import Chat from "../Chat/Chat";
+
+const Home = () => {
+  const [name, setName] = useState("");
+  const [room, setRoom] = useState("");
+  const [blur, setBlur] = useState(false);
+  const [joinChat, setJoinChat] = useState(false);
+
+  const isError: boolean = name === "";
+  const isError1: boolean = room === "";
+
+  const handleTouch = () => {
+    setBlur(true);
+  };
+
+  const shouldShowError: boolean = blur;
+  const textError: boolean = isError || isError1;
+
+  const joinRoom = () => {
+    if (name !== "" && room !== "") {
+      socket.emit("join-room", {
+        name: name,
+        room: room,
+      });
+      setJoinChat(true);
+    }
+  };
+
+  return (
+    <>
+      {!joinChat ? (
+        <Box
+          bg="darkColor"
+          display="flex"
+          flexDir="column"
+          gap={5}
+          alignItems="center"
+          justifyContent="center"
+          width="100%"
+          height="100%"
+        >
+          <Heading
+            as="h2"
+            size="4xl"
+            color="secondary"
+            noOfLines={1}
+            fontFamily="global"
+          >
+            <Highlight query="Kibo" styles={{ color: "primary" }}>
+              Welcome to Kibo!
+            </Highlight>
+          </Heading>
+          <Stack align="center">
+            <Text color="secondary" fontFamily="global">
+              A chat app that offers all you need
+            </Text>
+            <Text color="secondary" fontFamily="global">
+              Just choose a name and a room and start chatting!
+            </Text>
+          </Stack>
+          <FormControl
+            maxWidth={80}
+            color="secondary"
+            isInvalid={shouldShowError && textError}
+          >
+            <FormLabel>Name</FormLabel>
+            <Input
+              type="text"
+              autoComplete="off"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onBlur={handleTouch}
+            ></Input>
+            {isError ? (
+              <FormErrorMessage>Name is necessary</FormErrorMessage>
+            ) : (
+              <></>
+            )}
+            <FormLabel>Room</FormLabel>
+            <Input
+              type="text"
+              value={room}
+              autoComplete="off"
+              onChange={(e) => setRoom(e.target.value)}
+              onBlur={handleTouch}
+            ></Input>
+            {isError1 ? (
+              <FormErrorMessage>Room is necessary</FormErrorMessage>
+            ) : (
+              <></>
+            )}
+          </FormControl>
+          <Stack>
+            <Button colorScheme="purple" onClick={joinRoom}>
+              Go chat
+            </Button>
+          </Stack>
+          <Text
+            position="absolute"
+            bottom={10}
+            color="primaryComp"
+            fontFamily="global"
+            fontSize={13}
+          >
+            Designed and built by Andrés Casas. ©
+          </Text>
+        </Box>
+      ) : (
+        <Chat socket={socket} room={room} name={name} />
+      )}
+    </>
+  );
+};
+
+export default Home;
