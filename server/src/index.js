@@ -7,6 +7,10 @@ const app = express();
 
 app.use(cors);
 
+app.use('/', (req, res) => {
+  res.send('Welcome to my server landing page')
+})
+
 const server = http.createServer(app);
 
 socketIo(server);
