@@ -4,7 +4,7 @@ function socketIo (server) {
 
 const io = new Server(server, {
     cors: {
-      origin: "http://127.0.0.1:5173",
+      origin: "https://kibo-six.vercel.app",
       methods: ["GET", "POST"],
     },
   });
@@ -36,7 +36,6 @@ const io = new Server(server, {
       console.log(`User ${socket.id} has disconnected`);
     });
   });
-
 }
 
 module.exports = socketIo
