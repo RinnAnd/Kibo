@@ -23,4 +23,5 @@ export interface MediaStreamProps {
 export interface VideoWindowProps {
   localStreamRef: LegacyRef<HTMLVideoElement> | undefined;
   awayStreamRef: LegacyRef<HTMLVideoElement> | undefined;
+  onClose: () => void
 }
