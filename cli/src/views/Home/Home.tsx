@@ -59,6 +59,7 @@ const Home = () => {
             color="secondary"
             noOfLines={1}
             fontFamily="global"
+            fontSize="clamp(2rem, 6vw, 4rem)"
           >
             <Highlight query="Kibo" styles={{ color: "primary" }}>
               Welcome to Kibo!
