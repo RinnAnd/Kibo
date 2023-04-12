@@ -8,6 +8,9 @@ const io = new Server(server, {
       methods: ["GET", "POST"],
     },
   });
+
+  const room = {};
+  const users = {};
   
   io.on("connection", (socket) => {
     console.log(`User connected on: ${socket.id}`);
@@ -25,6 +28,8 @@ const io = new Server(server, {
           name: "Kibot",
           message: `${data.name} has joined the room!`,
         });
+        room.room = data.room
+        users[socket.id] = data.name;
       console.log(`User ${data.name} has joined the room ${data.room}`);
     });
 
@@ -34,6 +39,15 @@ const io = new Server(server, {
   
     socket.on("disconnect", () => {
       console.log(`User ${socket.id} has disconnected`);
+      const user = users[socket.id];
+      if (user) {
+        socket.to(room.room).emit('receive-message', {
+          room: room.room,
+          name: "Kibot",
+          message: `${user} has left the room!`,
+        })
+      }
+      delete users[socket.id]
     });
   });
 }
