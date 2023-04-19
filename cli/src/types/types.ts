@@ -1,4 +1,4 @@
-import { LegacyRef } from "react";
+import { LegacyRef, ReactNode } from "react";
 import { Socket } from "socket.io-client";
 
 export type Message = string | "";

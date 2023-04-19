@@ -1,127 +1,26 @@
 import { ChatProps, MessageProps } from "../../types/types";
 import "./Chat.css";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Box, Text, Input, Button, Tooltip } from "@chakra-ui/react";
-import { Logo, PhoneCall, VideoCall } from "../../components/svg/svg";
+import { Logo, VideoCall } from "../../components/svg/svg";
 import { useRef } from "react";
 import Peer, { MediaConnection } from "peerjs";
 import VideoCallBox from "../../components/VideoCall/VideoCall";
+import { myPeer as peer } from "../../peer";
+import { useParams } from "react-router";
+import { RoomContext } from "../../context/RoomContext";
 
-const Chat: React.FC<ChatProps> = ({ socket, name, room }) => {
+const Chat: React.FC = () => {
   const [message, setMessage] = useState("");
   const [chat, setChat] = useState<MessageProps[]>([]);
-  const [peerId, setPeerId] = useState("");
-  const [callOngoing, setCallOngoing] = useState(false);
-  const [call, setCall] = useState<MediaConnection>()
-
-  const peerInstance = useRef<Peer>();
-  const myVidRef = useRef<HTMLVideoElement>(null);
-  const theirVidRef = useRef<HTMLVideoElement>(null);
   const myRef = useRef<HTMLDivElement>(null);
 
-  const sendMessage = () => {
-    if (message !== "") {
-      const messageData = {
-        room: room,
-        name: name,
-        message: message,
-        time:
-          new Date(Date.now()).getHours() +
-          ":" +
-          new Date(Date.now()).getMinutes().toString().padStart(2, "0"),
-      };
-      socket.emit("send-message", messageData);
-      setChat((prevChat) => [...prevChat, messageData]);
-      setMessage("");
-    }
-  };
+  const { id } = useParams()
+  const { socket, username, me } = useContext(RoomContext);
 
   useEffect(() => {
-    const peer = new Peer();
-
-    peer.on("open", (id) => {
-      setPeerId(id);
-      socket.emit("peer-id", { room: room, id: id });
-    });
-
-    peer.on("call", (call) => {
-      navigator.mediaDevices
-        .getUserMedia({ video: true, audio: true })
-        .then((myStream) => {
-          if (myStream && myVidRef.current) {
-            myVidRef.current.srcObject = myStream;
-            myVidRef.current.play();
-          }
-          call.answer(myStream);
-          call.on("stream", (remoteStream) => {
-            if (remoteStream && theirVidRef.current) {
-              theirVidRef.current.srcObject = remoteStream;
-              theirVidRef.current.play();
-            }
-          });
-          setCall(call)
-        });
-      setCallOngoing(true);
-    });
-    peerInstance.current = peer;
-  }, []);
-
-  const startCall = (remotePeerId: string) => {
-    navigator.mediaDevices
-      .getUserMedia({ video: true, audio: true })
-      .then((myStream) => {
-        if (myStream && myVidRef.current) {
-          myVidRef.current.srcObject = myStream;
-          myVidRef.current.play();
-        }
-        const call = peerInstance.current?.call(remotePeerId, myStream);
-
-        call?.on("stream", (remoteStream) => {
-          if (remoteStream && theirVidRef.current) {
-            theirVidRef.current.srcObject = remoteStream;
-            theirVidRef.current.play();
-          }
-        })
-        setCall(call);
-      });
-    setCallOngoing(true);
-  };
-
-  const stopCall = () => {
-    if (call) {
-      call.close()
-    }
-    setCallOngoing(false)
-  }
-
-  useEffect(() => {
-    socket.on("receive-message", (data) => {
-      setChat((prevChat) => [...prevChat, data]);
-    });
-    socket.on("callme", (id) => {
-      setPeerId(id);
-    });
-    return () => {
-      socket.off("receive-message");
-    };
-  }, [socket]);
-
-  function scrollToBottom() {
-    if (myRef.current) {
-      myRef.current.scrollTop = myRef.current.scrollHeight;
-    }
-  }
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [chat]);
-
-  function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      sendMessage();
-    }
-  }
+    if (me) socket.emit("join-room", { roomId: id, name: username, peerId: me._id })
+  }, [id, me, socket])
 
   return (
     <Box
@@ -133,11 +32,9 @@ const Chat: React.FC<ChatProps> = ({ socket, name, room }) => {
       alignItems="center"
       justifyContent="center"
     >
-       {callOngoing ? (
-            <VideoCallBox localStreamRef={myVidRef} awayStreamRef={theirVidRef} onClose={stopCall}/>
-          ) : (
-            <></>
-          )}
+      <Text color="whiteAlpha.700">
+        You are in the room {id}
+      </Text>
       <Box
         bgGradient="linear(to-b, black 50%, purple.900)"
         height="70%"
@@ -168,7 +65,7 @@ const Chat: React.FC<ChatProps> = ({ socket, name, room }) => {
           </Box>
           <Box display="flex">
             <Tooltip label="Start videocall" fontSize="md">
-              <Button colorScheme="non" m={0} onClick={() => startCall(peerId)}>
+              <Button colorScheme="non" m={0} onClick={undefined}>
                 <VideoCall />
               </Button>
             </Tooltip>
@@ -187,22 +84,14 @@ const Chat: React.FC<ChatProps> = ({ socket, name, room }) => {
           {chat?.map((msg, idx) => (
             <Box
               key={idx}
-              bgGradient={
-                name === msg.name
-                  ? "linear(to-r, primary, primaryComp)"
-                  : "linear(to-r, window, darkColor)"
-              }
               borderRadius={18}
               px={6}
               py={3}
               width="fit-content"
               maxWidth="80%"
-              placeSelf={name === msg.name ? "flex-end" : ""}
               display="flex"
               flexDirection="column"
-              alignItems={name === msg.name ? "flex-end" : ""}
             >
-              {name !== msg.name && <Text color="purple.400">{msg.name}</Text>}
               <Text color="white" wordBreak="break-word" fontWeight={100}>
                 {msg.message}
               </Text>
@@ -228,9 +117,8 @@ const Chat: React.FC<ChatProps> = ({ socket, name, room }) => {
             border="none"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
           ></Input>
-          <Button colorScheme="" onClick={sendMessage} width={20}>
+          <Button colorScheme="" onClick={undefined} width={20}>
             <svg
               width="35"
               height="35"
